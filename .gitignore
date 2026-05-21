@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data and Outputs (Protecting local files and data privacy)
+*.csv
+*.xlsx
+*.parquet
+*.png
+*.jpg
+*.jpeg
+/data
+/results
+/keep
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# OS metadata
+.DS_Store
+Thumbs.db
