@@ -19,6 +19,13 @@ venv/
 .venv/
 env/
 
+# Environment data
+.env
+
+# Results and logs
+logs/
+*.log
+
 # OS metadata
 .DS_Store
 Thumbs.db

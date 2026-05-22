@@ -24,5 +24,6 @@ dependencies:
   - pytorch-cuda=12.4
   - pip:
       - adjustText==1.3.0
+      - python-dotenv==1.2.2
       - sentence-transformers
       - tensorflow[and-cuda]==2.19.1

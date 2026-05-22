@@ -1,6 +1,16 @@
+import os
 import re
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+
+from dotenv import load_dotenv
+load_dotenv()
+
+# Verify the token is active
+if os.getenv("HF_TOKEN"):
+    print("HF_TOKEN successfully loaded from security environment.")
+else:
+    print("Warning: HF_TOKEN not found in environment!")
 
 def clean_academic_text(text):
     """Clean academic text, including legal boilerplate, noise, and US/UK spelling normalization."""
@@ -81,7 +91,7 @@ def compute_embeddings(df, model_name):
     elif model_name == "PubMed_BERT":
         sbert_model_name = "neuml/pubmedbert-base-embeddings"
 
-    model = SentenceTransformer(sbert_model_name)
+    model = SentenceTransformer(sbert_model_name, use_safetensors=True)
     pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
 
     try:
