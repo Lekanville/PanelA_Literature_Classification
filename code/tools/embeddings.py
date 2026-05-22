@@ -80,8 +80,6 @@ def compute_embeddings(df, model_name):
         sbert_model_name = "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext"
     elif model_name == "PubMed_BERT":
         sbert_model_name = "neuml/pubmedbert-base-embeddings"
-    else:
-        sbert_model_name = model_name  # Default to whatever the user specified
 
     model = SentenceTransformer(sbert_model_name)
     pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
