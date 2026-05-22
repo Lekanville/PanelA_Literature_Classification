@@ -56,12 +56,13 @@ def clean_academic_text(text):
 
     return text
 
-def compute_embeddings(df):
+def compute_embeddings(df, model_name):
     """
     Compute SBERT embeddings for a list of texts.
     
     Args:
         texts (list of str): List of input texts to embed.
+        model_name (str): The name of the SBERT model to use.
     Returns:
         np.ndarray: Array of shape (n_texts, embedding_dim) containing the embeddings.
     """
@@ -71,7 +72,18 @@ def compute_embeddings(df):
     docs = df["Titl_and_Abs_Clean"].tolist()
 
     # Encode using the pool of 4 visible GPUs
-    model = SentenceTransformer('all-mpnet-base-v2')
+    if model_name == "all-mpnet":
+        sbert_model_name = 'all-mpnet-base-v2'
+    elif model_name == "Bio_clinical_BERT":
+        sbert_model_name = "emilyalsentzer/Bio_ClinicalBERT"
+    elif model_name == "Biomed_BERT":
+        sbert_model_name = "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext"
+    elif model_name == "PubMed_BERT":
+        sbert_model_name = "neuml/pubmedbert-base-embeddings"
+    else:
+        sbert_model_name = model_name  # Default to whatever the user specified
+
+    model = SentenceTransformer(sbert_model_name)
     pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
 
     try:

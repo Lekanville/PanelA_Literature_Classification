@@ -62,10 +62,11 @@ set_reproducibility(42)
 
 parser = argparse.ArgumentParser(description= "A script to filter data")
 parser.add_argument('-i', '--input_file', type=str, required=True, help= 'The input dataset')
+parser.add_argument('-s', '--sbert_model', type=str, required=True, help= 'The SBERT model to use for embeddings')
 parser.add_argument('-o', '--output_directory', type=str, required=True, help= 'The output directory to save results')
 
 
-def uoa_modelling(INPUT, OUTPUT):
+def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
 
     Path(OUTPUT).mkdir(parents=True, exist_ok=True)
 
@@ -79,7 +80,7 @@ def uoa_modelling(INPUT, OUTPUT):
     clean_df = clean_df.drop(columns = cols_to_clean, errors='ignore')
 
     # embeddings
-    embedded_df = compute_embeddings(clean_df)
+    embedded_df = compute_embeddings(clean_df, SBERT_MODEL)
 
     # Scan your processed column for the exact literal phrase
     real_matches = embedded_df [embedded_df['Titl_and_Abs_Clean'].str.contains(r'\bland plants\b', case=False, na=False)]
@@ -87,11 +88,11 @@ def uoa_modelling(INPUT, OUTPUT):
     print(f"Total rows with the literal phrase 'land plants': {len(real_matches)}")
 
     # If the count is 0 or incredibly low, print out where they are collapsing
-    if len(real_matches) == 0:
-        ghost_matches = embedded_df[embedded_df['Titl_and_Abs_Clean'].str.contains(r'\bland\b.*\bplants\b', case=False, na=False)]
-        for text in ghost_matches['Titl_and_Abs_Clean'].head(3):
-            print("--- GHOST SOURCE DETECTED ---")
-            print(text)
+    # if len(real_matches) == 0:
+    #     ghost_matches = embedded_df[embedded_df['Titl_and_Abs_Clean'].str.contains(r'\bland\b.*\bplants\b', case=False, na=False)]
+    #     for text in ghost_matches['Titl_and_Abs_Clean'].head(3):
+    #         print("--- GHOST SOURCE DETECTED ---")
+    #         print(text)
 
     
     # Data validation checks
@@ -318,4 +319,4 @@ def uoa_modelling(INPUT, OUTPUT):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    uoa_modelling(args.input_file, args.output_directory)
+    uoa_modelling(args.input_file, args.sbert_model, args.output_directory)

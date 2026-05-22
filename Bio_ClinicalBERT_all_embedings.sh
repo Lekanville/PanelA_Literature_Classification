@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=Bio_ClinicalBERT_all_embeddings
-#SBATCH --output=Bio_ClinicalBERT_all_embeddings.out
+#SBATCH --output=Bio_ClinicalBERT_all_embeddings.log
 #SBATCH --gpus=4
 #SBATCH --ntasks=1
 
@@ -37,4 +37,6 @@ export PYTHON_START_METHOD='forkserver'
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 export TF_CPP_MIN_LOG_LEVEL=1
 
-srun python code/modelling.py --input_file data/actual_Bio_ClinicalBERT_all_embeddings.csv --output_directory results/all_embeddings_modelling/Bio_ClinicalBERT_all_embeddings
+srun python code/modelling.py --input_file data/actual_Bio_ClinicalBERT_all_embeddings.csv  \
+                                --sbert_model Bio_clinical_BERT \
+                                --output_directory results/all_embeddings_modelling/Bio_ClinicalBERT_all_embeddings

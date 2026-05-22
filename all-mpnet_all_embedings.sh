@@ -37,4 +37,6 @@ export PYTHON_START_METHOD='forkserver'
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 export TF_CPP_MIN_LOG_LEVEL=1
 
-srun python code/modelling.py --input_file data/actual_all-mpnet_all_embeddings.csv --output_directory results/all_embeddings_modelling/all-mpnet_all_embeddings
+srun python code/modelling.py --input_file data/actual_all-mpnet_all_embeddings.csv \
+                                --sbert_model all-mpnet \
+                                --output_directory results/all_embeddings_modelling/all-mpnet_all_embeddings
