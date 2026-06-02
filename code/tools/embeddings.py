@@ -91,7 +91,7 @@ def compute_embeddings(df, model_name):
     elif model_name == "PubMed_BERT":
         sbert_model_name = "neuml/pubmedbert-base-embeddings"
 
-    model = SentenceTransformer(sbert_model_name, use_safetensors=True)
+    model = SentenceTransformer(sbert_model_name, model_kwargs={"use_safetensors": True})
     pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
 
     try:

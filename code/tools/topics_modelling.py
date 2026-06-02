@@ -13,32 +13,28 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_of_assessment_number', top_n=10):
     # 1. Group all abstracts by UoA to create "Class Documents"
-    # This treats each UoA as one single giant text block
     uoa_docs = df.groupby(uoa_col)[text_col].apply(lambda x: ' '.join(x)).reset_index()
 
     # 2. Define a clean, year-agnostic dynamic cleaner for the vectorizer
     def dynamic_vectorizer_cleaner(doc):
         if not isinstance(doc, str):
             return ""
-        # Lowercase to match vectorizer behavior
         doc = doc.lower()
-        # Dynamically erase ANY 4-digit year followed by author/authors/authorship
-        # e.g., "2018 author", "2022 authors", "2025 author" become completely blank spaces
+        # Dynamically erase ANY 4-digit year followed by author boilerplates
         doc = re.sub(r'\b\d{4}\s+author\w*', ' ', doc)
         return doc
 
-    # 3. Initialize TfidfVectorizer with N-gram support
-    # stop_words='english' is vital to remove "the", "and", etc.
-    # ngram_range=(2, 3) forces it to look for phrases/areas specifically
+    # 3. Stopwords setup
     domain_stopwords = [
-    'rights reserved', 'et al', '95 ci', '95 confidence', 'confidence interval',
-    'john wiley', 'wiley sons', 'springer nature', 'elsevier', 'publisher',
-    'american psychological', 'psychological association', 'abstract available',
-    'study', 'results', 'conclusions', 'background', 'methods'
+        'rights reserved', 'et al', '95 ci', '95 confidence', 'confidence interval',
+        'john wiley', 'wiley sons', 'springer nature', 'elsevier', 'publisher',
+        'american psychological', 'psychological association', 'abstract available',
+        'study', 'results', 'conclusions', 'background', 'methods'
     ]
+
     final_stopwords = text.ENGLISH_STOP_WORDS.union(domain_stopwords)
 
-    # 4. Initialize TfidfVectorizer using the dynamic preprocessor hook
+    # 4. Initialize TfidfVectorizer (Reads everything natively with regular spaces)
     vectorizer = TfidfVectorizer(
         preprocessor=dynamic_vectorizer_cleaner,
         stop_words=list(final_stopwords), 
@@ -50,19 +46,102 @@ def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_
     tfidf_matrix = vectorizer.fit_transform(uoa_docs[text_col])
     feature_names = vectorizer.get_feature_names_out()
 
-    # 6. Extract top phrases per UoA
+    # Define your concept map for the final filtering stage
+    concept_map = {
+        "controlled trial": "randomised controlled trial",
+        "randomised controlled": "randomised controlled trial",
+        "randomly assigned": "randomised controlled trial",
+        "transcription factors": "transcription factor",
+        "stem cells": "stem cell"
+    }
+
+    # 6. Extract top phrases per UoA (Mapping duplicates on-the-fly)
     uoa_themes = {}
     for i, row in uoa_docs.iterrows():
         uoa_name = row[uoa_col]
-        # Get the tf-idf scores for this UoA's "document"
         scores = tfidf_matrix[i].toarray().flatten()
-        # Sort and get the indices of the top N scores
-        top_indices = scores.argsort()[-top_n:][::-1]
-        # Map indices to the actual phrases
-        top_phrases = [feature_names[idx] for idx in top_indices]
-        uoa_themes[uoa_name] = top_phrases
+        
+        # Pull the top 30 indices so we have plenty of backup terms 
+        # to fill the "free spaces" when duplicates get merged!
+        top_indices = scores.argsort()[-30:][::-1]
+        
+        seen_concepts = set()
+        final_top_phrases = []
+        
+        for idx in top_indices:
+            raw_phrase = feature_names[idx]
+            
+            # If the phrase matches a synonym, transform it cleanly here
+            mapped_phrase = concept_map.get(raw_phrase, raw_phrase)
+            
+            # De-duplicate to allow new terms to bubble up into the free slots
+            if mapped_phrase not in seen_concepts:
+                seen_concepts.add(mapped_phrase)
+                final_top_phrases.append(mapped_phrase)
+                
+            # Stop the moment we cleanly hit your top_n requirement
+            if len(final_top_phrases) == top_n:
+                break
+                
+        uoa_themes[uoa_name] = final_top_phrases
         
     return uoa_themes
+
+# def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_of_assessment_number', top_n=10):
+#     # 1. Group all abstracts by UoA to create "Class Documents"
+#     # This treats each UoA as one single giant text block
+#     uoa_docs = df.groupby(uoa_col)[text_col].apply(lambda x: ' '.join(x)).reset_index()
+
+#     # 2. Define a clean, year-agnostic dynamic cleaner for the vectorizer
+#     def dynamic_vectorizer_cleaner(doc):
+#         if not isinstance(doc, str):
+#             return ""
+#         # Lowercase to match vectorizer behavior
+#         doc = doc.lower()
+#         # Dynamically erase ANY 4-digit year followed by author/authors/authorship
+#         # e.g., "2018 author", "2022 authors", "2025 author" become completely blank spaces
+#         doc = re.sub(r'\b\d{4}\s+author\w*', ' ', doc)
+
+#         # Collapse synonymous phrases into unified, underscored tokens
+#         # Underscores prevent the vectorizer from splitting them up incorrectly later
+#         return doc
+
+#     # 3. Initialize TfidfVectorizer with N-gram support
+#     # stop_words='english' is vital to remove "the", "and", etc.
+#     # ngram_range=(2, 3) forces it to look for phrases/areas specifically
+#     domain_stopwords = [
+#     'rights reserved', 'et al', '95 ci', '95 confidence', 'confidence interval',
+#     'john wiley', 'wiley sons', 'springer nature', 'elsevier', 'publisher',
+#     'american psychological', 'psychological association', 'abstract available',
+#     'study', 'results', 'conclusions', 'background', 'methods'
+#     ]
+#     final_stopwords = text.ENGLISH_STOP_WORDS.union(domain_stopwords)
+
+#     # 4. Initialize TfidfVectorizer using the dynamic preprocessor hook
+#     vectorizer = TfidfVectorizer(
+#         preprocessor=dynamic_vectorizer_cleaner,
+#         stop_words=list(final_stopwords), 
+#         ngram_range=(2, 3), 
+#         max_features=10000
+#     )
+
+#     # 5. Fit and transform the Class Documents
+#     tfidf_matrix = vectorizer.fit_transform(uoa_docs[text_col])
+#     feature_names = vectorizer.get_feature_names_out()
+
+#     # 6. Extract top phrases per UoA
+#     uoa_themes = {}
+#     for i, row in uoa_docs.iterrows():
+#         uoa_name = row[uoa_col]
+#         # Get the tf-idf scores for this UoA's "document"
+#         scores = tfidf_matrix[i].toarray().flatten()
+#         # Sort and get the indices of the top N scores
+#         top_indices = scores.argsort()[-top_n:][::-1]
+#         # Map indices to the actual phrases
+#         top_phrases = [feature_names[idx] for idx in top_indices]
+#         uoa_themes[uoa_name] = top_phrases
+        
+#     return uoa_themes
 
 
 

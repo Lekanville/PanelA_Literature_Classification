@@ -22,9 +22,11 @@ from tools.final_eval import final_evaluation, knn_instance_based_fnal_eval
 from tools.embeddings import compute_embeddings
 
 import warnings
+from sklearn.exceptions import ConvergenceWarning
 # Filter out the specific UserWarning regarding feature names
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 warnings.filterwarnings("ignore", category=FutureWarning, module="sklearn.utils._plotting")
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
 import random
 
@@ -83,9 +85,9 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
     embedded_df = compute_embeddings(clean_df, SBERT_MODEL)
 
     # Scan your processed column for the exact literal phrase
-    real_matches = embedded_df [embedded_df['Titl_and_Abs_Clean'].str.contains(r'\bland plants\b', case=False, na=False)]
+    # real_matches = embedded_df [embedded_df['Titl_and_Abs_Clean'].str.contains(r'\bland plants\b', case=False, na=False)]
 
-    print(f"Total rows with the literal phrase 'land plants': {len(real_matches)}")
+    # print(f"Total rows with the literal phrase 'land plants': {len(real_matches)}")
 
     # If the count is 0 or incredibly low, print out where they are collapsing
     # if len(real_matches) == 0:
