@@ -18,7 +18,7 @@ from tools.tools import dep_variable, clean_out_dups, select_random, weighted_kn
 from tools.topics_modelling import extract_uoa_research_areas, plot_uoa_network
 from tools.hyperparameter_tuning import hyperparam_search_main
 from tools.cross_val import cross_val_main
-from tools.final_eval import final_evaluation, knn_instance_based_fnal_eval
+from tools.final_eval import final_evaluation, knn_instance_based_final_eval
 from tools.embeddings import compute_embeddings
 
 import warnings
@@ -187,7 +187,7 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
     pd.DataFrame(tuning_results).to_excel(f"{OUTPUT}/knn_tuning_results.xlsx", index=False)
 
     logger.info("Testing the KNN prediction of the overall best configuration on the held-out test set...")
-    knn_instance_based_fnal_eval(X_train_all, y_train_all.tolist(), X_test_all, y_test_all.tolist(), 
+    knn_instance_based_final_eval(X_train_all, y_train_all.tolist(), X_test_all, y_test_all.tolist(), 
                                  champion_k, champion_w, epsilon)
 
 
@@ -224,8 +224,8 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
             logger.info(f"\n--- Running {alg} for UoA {uoa} ---")
 
             grid_search_cv = hyperparam_search_main(ALG=alg)
-            X_train_resampled =  normalize(np.asarray(X_train_resampled, dtype=np.float32), norm="l2")
-            X_test = normalize(np.asarray(X_test, dtype=np.float32), norm="l2")
+            # X_train_resampled =  normalize(np.asarray(X_train_resampled, dtype=np.float32), norm="l2")
+            # X_test = normalize(np.asarray(X_test, dtype=np.float32), norm="l2")
 
             mean_auc, std_auc = cross_val_main(grid_search_cv, X_train_resampled, y_train_resampled, REPEATS, uoa, OUTPUT, alg_name=alg)
             logger.info(f"Cross-validation AUC: {mean_auc:.2f} ± {std_auc:.2f}")
@@ -257,58 +257,58 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
             })
 
         # --- The "Fair Fight" KNN Baseline Logic ---
-        logger.info(f"\n--- Running KNN_Baseline for UoA {uoa} ---")
-        # 1. Prepare data (SBERT embeddings are already L2-normalized)
-        X_train_norm = normalize(np.asarray(X_train_outer, dtype=np.float32), norm="l2")  # Normalize training data
-        X_test_norm = normalize(np.asarray(X_test, dtype=np.float32), norm="l2")  # Normalize test data (just in case)
+        # logger.info(f"\n--- Running KNN_Baseline for UoA {uoa} ---")
+        # # 1. Prepare data (SBERT embeddings are already L2-normalized)
+        # X_train_norm = normalize(np.asarray(X_train_outer, dtype=np.float32), norm="l2")  # Normalize training data
+        # X_test_norm = normalize(np.asarray(X_test, dtype=np.float32), norm="l2")  # Normalize test data (just in case)
 
-        # 2. Calculate Cosine Similarity
-        # (Since they are normalized, dot product = cosine similarity)
-        sim_matrix = np.dot(X_test_norm, X_train_norm.T)
+        # # 2. Calculate Cosine Similarity
+        # # (Since they are normalized, dot product = cosine similarity)
+        # sim_matrix = np.dot(X_test_norm, X_train_norm.T)
 
-        # 3. Apply Weighting (Inverse Distance)
-        k = champion_k
-        w = champion_w
-        # episom defined above
+        # # 3. Apply Weighting (Inverse Distance)
+        # k = champion_k
+        # w = champion_w
+        # # episom defined above
 
-        # Get top k indices and their similarity values
-        top_k_indices = np.argpartition(-sim_matrix, kth=k-1, axis=1)[:, :k]
+        # # Get top k indices and their similarity values
+        # top_k_indices = np.argpartition(-sim_matrix, kth=k-1, axis=1)[:, :k]
 
-        # Get the actual similarity values for those top k
-        rows = np.arange(sim_matrix.shape[0])[:, None]
-        neighbour_sims = sim_matrix[rows, top_k_indices]
+        # # Get the actual similarity values for those top k
+        # rows = np.arange(sim_matrix.shape[0])[:, None]
+        # neighbour_sims = sim_matrix[rows, top_k_indices]
 
-        weights = similarities_to_weights(neighbour_sims, w, k, epsilon)
+        # weights = similarities_to_weights(neighbour_sims, w, k, epsilon)
 
-        # 4. Calculate Weighted Score
-        # Get labels of the neighbours (0s and 1s)
-        neighbour_labels = y_train_outer.values[top_k_indices] 
+        # # 4. Calculate Weighted Score
+        # # Get labels of the neighbours (0s and 1s)
+        # neighbour_labels = y_train_outer.values[top_k_indices] 
 
-        # Apply weights: (sum of weighted labels) / (sum of weights)
-        weighted_scores = np.sum(neighbour_labels * weights, axis=1) / np.sum(weights, axis=1)
-        y_pred = (weighted_scores >= 0.5).astype(int)
+        # # Apply weights: (sum of weighted labels) / (sum of weights)
+        # weighted_scores = np.sum(neighbour_labels * weights, axis=1) / np.sum(weights, axis=1)
+        # y_pred = (weighted_scores >= 0.5).astype(int)
 
-        # 5. Evaluate
-        cm = confusion_matrix(y_test, y_pred)
-        logger.info(f"Confusion Matrix:\n{cm}")
+        # # 5. Evaluate
+        # cm = confusion_matrix(y_test, y_pred)
+        # logger.info(f"Confusion Matrix:\n{cm}")
 
-        knn_auc = roc_auc_score(y_test, weighted_scores)
-        knn_f1 = f1_score(y_test, y_pred)
-        knn_precision = precision_score(y_test, y_pred)
-        knn_recall = recall_score(y_test, y_pred)
-        knn_accuracy = accuracy_score(y_test, y_pred)
-        results.append({
-            "uoa": uoa,
-            "algorithm": "KNN_Baseline",
-            "cv_mean_auc": 0.0, # No CV for KNN
-            "cv_std_auc": 0.0,  # No CV for KNN
-            "test_roc_auc": knn_auc,
-            "test_f1": knn_f1,
-            "test_precision": knn_precision,
-            "test_recall": knn_recall,
-            "test_accuracy": knn_accuracy
-        })
-        logger.info(f"Completed KNN Baseline for UoA {uoa}")
+        # knn_auc = roc_auc_score(y_test, weighted_scores)
+        # knn_f1 = f1_score(y_test, y_pred)
+        # knn_precision = precision_score(y_test, y_pred)
+        # knn_recall = recall_score(y_test, y_pred)
+        # knn_accuracy = accuracy_score(y_test, y_pred)
+        # results.append({
+        #     "uoa": uoa,
+        #     "algorithm": "KNN_Baseline",
+        #     "cv_mean_auc": 0.0, # No CV for KNN
+        #     "cv_std_auc": 0.0,  # No CV for KNN
+        #     "test_roc_auc": knn_auc,
+        #     "test_f1": knn_f1,
+        #     "test_precision": knn_precision,
+        #     "test_recall": knn_recall,
+        #     "test_accuracy": knn_accuracy
+        # })
+        # logger.info(f"Completed KNN Baseline for UoA {uoa}")
 
 
     # Save results to Excel

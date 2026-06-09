@@ -28,7 +28,7 @@ def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_
     domain_stopwords = [
         'rights reserved', 'et al', '95 ci', '95 confidence', 'confidence interval',
         'john wiley', 'wiley sons', 'springer nature', 'elsevier', 'publisher',
-        'american psychological', 'psychological association', 'abstract available',
+        'american psychological', 'psychological association', 'abstract available', "poorly understood",
         'study', 'results', 'conclusions', 'background', 'methods'
     ]
 
@@ -52,7 +52,8 @@ def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_
         "randomised controlled": "randomised controlled trial",
         "randomly assigned": "randomised controlled trial",
         "transcription factors": "transcription factor",
-        "stem cells": "stem cell"
+        "stem cells": "stem cell",
+        "type diabetes": "type 2 diabetes"
     }
 
     # 6. Extract top phrases per UoA (Mapping duplicates on-the-fly)

@@ -90,7 +90,7 @@ def select_random(X_train_initial, y_train_initial):
     
     return (X_resampled, y_resampled)
 
-def weighted_knn_uoa_scores(X_train, y_train, X_new, k, weighting, epsilon=1e-6):
+def weighted_knn_uoa_scores(X_train, y_train, X_new, k, weighting, epsilon):
     # SBERT embeddings are already L2-normalized, so no need to normalize again
     X_train_norm = normalize(np.asarray(X_train, dtype=np.float32), norm="l2")  # Ensure training data is normalized
     X_new_norm = normalize(np.asarray(X_new, dtype=np.float32), norm="l2")  # Ensure new data is normalized

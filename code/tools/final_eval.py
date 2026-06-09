@@ -40,36 +40,36 @@ def final_evaluation(model, X_test, y_test, uoa_dat):
     return final_roc_auc, final_f1, final_precision, final_recall, final_accuracy
 
 
-def knn_instance_based_fnal_eval(X_train_all, y_tune_train_all, X_test_all, y_test_all, champion_k, champion_w, epsilon):
+def knn_instance_based_final_eval(X_train_all, y_tune_train_all, X_test_all, y_test_all, champion_k, champion_w, epsilon):
 
-    # 1. Run inference using your found champion configuration parameters
+    # 1. Execute inference using the optimal champion hyperparameter configuration
     final_scores, names, _ = weighted_knn_uoa_scores(
-        X_train_all, y_tune_train_all, X_new=X_test_all,                                 
+        X_train_all, y_tune_train_all, X_new=X_test_all,                                                 
         k=champion_k, weighting=champion_w, epsilon=epsilon
     )
 
-    # Convert raw scores to absolute predictions
+    # Map raw maximum scores to absolute categorical predictions
     y_pred = [names[i] for i in np.argmax(final_scores, axis=1)]
 
-    # 2. Compute Multi-class Macro Metrics for direct OvR Comparison
-    # This provides global Precision, Recall, and F1 across all UoAs combined
+    # 2. Compute overall classification metrics on the held-out test dataset
+    # Provides global Precision, Recall, F1-Score, and Accuracy across all combined UoAs
     iba_report = classification_report(y_test_all, y_pred, output_dict=True)
     logger.info(f"IBA Overall Macro F1-Score: {iba_report['macro avg']['f1-score']:.4f}")
     logger.info(f"IBA Overall Macro Precision: {iba_report['macro avg']['precision']:.4f}")
     logger.info(f"IBA Overall Macro Recall: {iba_report['macro avg']['recall']:.4f}")
+    logger.info(f"IBA Overall Test Accuracy: {iba_report['accuracy']:.4f}")
 
-    # 3. YES, you can calculate Multi-class ROC-AUC!
-    # Using the "one-vs-one" or "one-vs-rest" probability handling method:
-    # We pass the raw normalized probabilities (scores) to evaluate the ranking capability.
+    # 3. Calculate Multi-class Macro AUC-ROC
+    # We perform row-wise normalization to transform raw distance scores into a 
+    # compliant probability distribution, satisfying standard multi-class OvR assumptions.
     try:
-        # Normalize final scores to sum to 1 row-wise to represent probabilities
         proba_matrix = final_scores / np.sum(final_scores, axis=1, keepdims=True)
         iba_roc_auc = roc_auc_score(y_test_all, proba_matrix, multi_class='ovr', average='macro')
         logger.info(f"IBA Multi-class Macro ROC-AUC: {iba_roc_auc:.4f}")
     except Exception as e:
         logger.warning(f"Could not calculate multi-class AUC: {e}")
 
-    # 4. Multi-class Confusion Matrix
+    # 4. Generate Multi-class Confusion Matrix for topological error analysis
     string_axes = [str(x) for x in names]
     iba_cm = confusion_matrix(y_test_all, y_pred, labels=names)
     logger.info(f"IBA Matrix Axis Order: {string_axes}")
