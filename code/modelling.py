@@ -266,10 +266,9 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
             })
 
             if (SBERT_MODEL == "Biomed_BERT") and (alg == "LightGBM"):  
-                            
                 # Create the target model folder path securely
                 model_dir = Path(OUTPUT) / "model"
-                model_dir.mkdir(parents=True, exist_ok=True)  # <-- This prevents the crash!
+                model_dir.mkdir(parents=True, exist_ok=True) 
                 model_filename = model_dir / f"champion_ovr_model_uoa_{uoa}.joblib"
                 
                 # Save the final optimized Scikit-learn Pipeline estimator
