@@ -54,9 +54,9 @@ def knn_instance_based_final_eval(X_train_all, y_tune_train_all, X_test_all, y_t
     # 2. Compute overall classification metrics on the held-out test dataset
     # Provides global Precision, Recall, F1-Score, and Accuracy across all combined UoAs
     iba_report = classification_report(y_test_all, y_pred, output_dict=True)
-    logger.info(f"IBA Overall Macro F1-Score: {iba_report['macro avg']['f1-score']:.4f}")
     logger.info(f"IBA Overall Macro Precision: {iba_report['macro avg']['precision']:.4f}")
     logger.info(f"IBA Overall Macro Recall: {iba_report['macro avg']['recall']:.4f}")
+    logger.info(f"IBA Overall Macro F1-Score: {iba_report['macro avg']['f1-score']:.4f}")
     logger.info(f"IBA Overall Test Accuracy: {iba_report['accuracy']:.4f}")
 
     # 3. Calculate Multi-class Macro AUC-ROC

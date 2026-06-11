@@ -4,7 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0=all, 1=no info, 2=no warnings, 3=n
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
 
-import re
+import joblib
 import argparse
 import numpy as np
 import pandas as pd
@@ -125,6 +125,15 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
     X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(
         X_all, y_all, test_size=0.2, random_state=42, stratify=y_all
     )
+
+    # 1b. Capture the original dataframe indices assigned to the test set
+    test_indices = X_test_all.index
+    test_tracking_df = embedded_df.loc[test_indices]
+    test_dataset_path = Path(OUTPUT) / "test_dataset.csv"
+    test_tracking_df.to_csv(test_dataset_path, index=True)
+    logger.info(f"Held-out test set saved to {test_dataset_path} with {len(test_tracking_df)} rows")
+
+
 
     # 2. Extract UoA research areas (themes) using c-TF-IDF for interpretability and insights
     # a. We use the TRAINING portion of the data to ensure that our thematic analysis is based on the same data that the models
@@ -256,6 +265,16 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
                 "test_accuracy": final_accuracy
             })
 
+            if (SBERT_MODEL == "Biomed_BERT") and (alg == "LightGBM"):  
+                            
+                # Create the target model folder path securely
+                model_dir = Path(OUTPUT) / "model"
+                model_dir.mkdir(parents=True, exist_ok=True)  # <-- This prevents the crash!
+                model_filename = model_dir / f"champion_ovr_model_uoa_{uoa}.joblib"
+                
+                # Save the final optimized Scikit-learn Pipeline estimator
+                joblib.dump(best_estimator, model_filename) 
+                logger.info(f"Successfully archived champion model for UoA {uoa} at: {model_filename}")
         # --- The "Fair Fight" KNN Baseline Logic ---
         # logger.info(f"\n--- Running KNN_Baseline for UoA {uoa} ---")
         # # 1. Prepare data (SBERT embeddings are already L2-normalized)
