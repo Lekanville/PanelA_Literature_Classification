@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from loguru import logger
-from sklearn.preprocessing import normalize
+# from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import (roc_auc_score, f1_score, confusion_matrix, precision_score, recall_score, accuracy_score)
+# from sklearn.metrics import (roc_auc_score, f1_score, confusion_matrix, precision_score, recall_score, accuracy_score)
 
 from tools.tools import dep_variable, clean_out_dups, select_random, weighted_knn_uoa_scores, similarities_to_weights
 from tools.topics_modelling import extract_uoa_research_areas, plot_uoa_network
