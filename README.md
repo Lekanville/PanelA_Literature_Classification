@@ -30,6 +30,10 @@ SCOPUS_API_KEY=<Elsevier API key>
 
 ## 1. Preprocessing
 
+```bash
+sbatch preprocess_ref_data.sh
+```
+
 Input: `data/REF_all_submissions.xlsx` (all REF submissions).
 
 Steps:
@@ -56,6 +60,13 @@ One job per PLM; each runs `code/modelling.py` on the preprocessed CSV and write
 | `BioMedBert_all_embedings.sh` | `Biomed_BERT` | `BioMedBert_all_embeddings` |
 | `pubmedbert-base-embeddings_all_embedings.sh` | `PubMed_BERT` | `pubmedbert-base-embeddings_all_embeddings` |
 
+```bash
+sbatch all-mpnet_all_embedings.sh
+sbatch Bio_ClinicalBERT_all_embedings.sh
+sbatch BioMedBert_all_embedings.sh
+sbatch pubmedbert-base-embeddings_all_embedings.sh
+```
+
 Each run:
 1. Computes embeddings from the cleaned title and abstract.
 2. Makes a stratified 80/20 train/test split and saves the test set as `test_dataset.csv`.
@@ -74,10 +85,14 @@ sbatch create_knn_table.sh   # k-NN held-out test table
 - `results/all_embeddings_modelling/cv_auc_table.xlsx`: mean (SD) cross-validation AUC-ROC per UoA, PLM and classifier, with the best score per classifier in each UoA in bold. `KerasMLP` is labelled `MLP`.
 - `results/all_embeddings_modelling/knn_results_table.xlsx`: champion k, weighting and multi-class test metrics per PLM. It reads `knn_test_results.csv` and falls back to the run's `.log` file for runs made before that file was saved.
 
-Note that `cv_mean_auc` is the AUC of the mean ROC curve across folds, not the arithmetic mean of the fold AUCs.
-
 ## 4. Multi-label evaluation
 
 Training uses one primary UoA per article, but many articles were submitted to several UoAs. This step compares strict precision (matches the primary UoA) with adjusted precision (matches any UoA the article was historically submitted to).
 
-Set `MODEL_OUTPUT_DIR` in `evaluate_multilabel.sh` to a run folder containing `test_dataset.csv` and `model/` (currently the BioMedBERT run), then submit it. The summary is saved as `multilabel_precision.csv` in that folder.
+Set `MODEL_OUTPUT_DIR` in `evaluate_multilabel.sh` to a run folder containing `test_dataset.csv` and `model/` (currently the BioMedBERT run), then submit it:
+
+```bash
+sbatch evaluate_multilabel.sh
+```
+
+The summary is saved as `multilabel_precision.csv` in that folder.
