@@ -196,8 +196,9 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
     pd.DataFrame(tuning_results).to_excel(f"{OUTPUT}/knn_tuning_results.xlsx", index=False)
 
     logger.info("Testing the KNN prediction of the overall best configuration on the held-out test set...")
-    knn_instance_based_final_eval(X_train_all, y_train_all.tolist(), X_test_all, y_test_all.tolist(), 
+    knn_results = knn_instance_based_final_eval(X_train_all, y_train_all.tolist(), X_test_all, y_test_all.tolist(), 
                                  champion_k, champion_w, epsilon)
+    pd.DataFrame([knn_results]).to_csv(f"{OUTPUT}/knn_test_results.csv", index=False)
 
 
 
@@ -331,6 +332,19 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
 
     # Save results to Excel
     results_df = pd.DataFrame(results)
+    results_df = results_df[
+        [
+            "algorithm",
+            "uoa",
+            "cv_mean_auc",
+            "cv_std_auc",
+            "test_roc_auc",
+            "test_accuracy",
+            "test_recall",
+            "test_precision",
+            "test_f1",
+        ]
+    ].sort_values(["algorithm", "uoa"])
     results_df.to_excel(f"{OUTPUT}/modelling_results.xlsx", index=False)
     logger.info(f"Final testing results saved to {OUTPUT}/modelling_results.xlsx")
 

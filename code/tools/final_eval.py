@@ -62,6 +62,7 @@ def knn_instance_based_final_eval(X_train_all, y_tune_train_all, X_test_all, y_t
     # 3. Calculate Multi-class Macro AUC-ROC
     # We perform row-wise normalization to transform raw distance scores into a 
     # compliant probability distribution, satisfying standard multi-class OvR assumptions.
+    iba_roc_auc = None
     try:
         proba_matrix = final_scores / np.sum(final_scores, axis=1, keepdims=True)
         iba_roc_auc = roc_auc_score(y_test_all, proba_matrix, multi_class='ovr', average='macro')
@@ -74,3 +75,13 @@ def knn_instance_based_final_eval(X_train_all, y_tune_train_all, X_test_all, y_t
     iba_cm = confusion_matrix(y_test_all, y_pred, labels=names)
     logger.info(f"IBA Matrix Axis Order: {string_axes}")
     logger.info(f"IBA Final Multi-class Confusion Matrix:\n{iba_cm}")
+
+    return {
+        "k": champion_k,
+        "weighting": champion_w,
+        "multiclass_auc_roc": iba_roc_auc,
+        "test_accuracy": iba_report['accuracy'],
+        "macro_recall": iba_report['macro avg']['recall'],
+        "macro_precision": iba_report['macro avg']['precision'],
+        "macro_f1": iba_report['macro avg']['f1-score'],
+    }
