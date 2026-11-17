@@ -1,0 +1,107 @@
+{
+  "input_file": "data/REF_all_submissions.xlsx",
+  "panel_a_uoas": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "journal_article_rows": 48723,
+  "journal_article_rows_by_uoa": {
+    "1": 11972,
+    "2": 4901,
+    "3": 11575,
+    "4": 9753,
+    "5": 7100,
+    "6": 3422
+  },
+  "missing_or_blank_doi_rows": 71,
+  "unique_dois": 40109,
+  "duplicate_doi_rows_removed": 8543,
+  "dois_submitted_to_multiple_uoas": 3670,
+  "unique_articles_by_primary_uoa": {
+    "1": 10391,
+    "2": 3570,
+    "3": 9812,
+    "4": 7957,
+    "5": 5508,
+    "6": 2871
+  },
+  "primary_uoa_selection": "first occurrence in source workbook order",
+  "sample_per_uoa": 1000,
+  "random_seed": 101,
+  "sampled_rows": 6000,
+  "sampled_rows_by_uoa": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000,
+    "6": 1000
+  },
+  "abstracts_retrieved": null,
+  "abstract_retrieval_failures": null
+}
+Processed 100/6000 sampled DOIs; abstracts present: 100
+Processed 200/6000 sampled DOIs; abstracts present: 198
+Processed 300/6000 sampled DOIs; abstracts present: 298
+Processed 400/6000 sampled DOIs; abstracts present: 397
+Processed 500/6000 sampled DOIs; abstracts present: 497
+Processed 600/6000 sampled DOIs; abstracts present: 597
+Processed 700/6000 sampled DOIs; abstracts present: 696
+Processed 800/6000 sampled DOIs; abstracts present: 795
+Processed 900/6000 sampled DOIs; abstracts present: 893
+Processed 1000/6000 sampled DOIs; abstracts present: 992
+Processed 1100/6000 sampled DOIs; abstracts present: 1087
+Processed 1200/6000 sampled DOIs; abstracts present: 1185
+Processed 1300/6000 sampled DOIs; abstracts present: 1284
+Processed 1400/6000 sampled DOIs; abstracts present: 1383
+Processed 1500/6000 sampled DOIs; abstracts present: 1481
+Processed 1600/6000 sampled DOIs; abstracts present: 1577
+Processed 1700/6000 sampled DOIs; abstracts present: 1674
+Processed 1800/6000 sampled DOIs; abstracts present: 1772
+Processed 1900/6000 sampled DOIs; abstracts present: 1870
+Processed 2000/6000 sampled DOIs; abstracts present: 1969
+Processed 2100/6000 sampled DOIs; abstracts present: 2065
+Processed 2200/6000 sampled DOIs; abstracts present: 2164
+Processed 2300/6000 sampled DOIs; abstracts present: 2263
+Processed 2400/6000 sampled DOIs; abstracts present: 2361
+Processed 2500/6000 sampled DOIs; abstracts present: 2458
+Processed 2600/6000 sampled DOIs; abstracts present: 2556
+Processed 2700/6000 sampled DOIs; abstracts present: 2656
+Processed 2800/6000 sampled DOIs; abstracts present: 2754
+Processed 2900/6000 sampled DOIs; abstracts present: 2852
+Processed 3000/6000 sampled DOIs; abstracts present: 2951
+Processed 3100/6000 sampled DOIs; abstracts present: 3050
+Processed 3200/6000 sampled DOIs; abstracts present: 3149
+Processed 3300/6000 sampled DOIs; abstracts present: 3248
+Processed 3400/6000 sampled DOIs; abstracts present: 3347
+Processed 3500/6000 sampled DOIs; abstracts present: 3447
+Processed 3600/6000 sampled DOIs; abstracts present: 3546
+Processed 3700/6000 sampled DOIs; abstracts present: 3645
+Processed 3800/6000 sampled DOIs; abstracts present: 3744
+Processed 3900/6000 sampled DOIs; abstracts present: 3844
+Processed 4000/6000 sampled DOIs; abstracts present: 3942
+Processed 4100/6000 sampled DOIs; abstracts present: 4040
+Processed 4200/6000 sampled DOIs; abstracts present: 4139
+Processed 4300/6000 sampled DOIs; abstracts present: 4239
+Processed 4400/6000 sampled DOIs; abstracts present: 4339
+Processed 4500/6000 sampled DOIs; abstracts present: 4438
+Processed 4600/6000 sampled DOIs; abstracts present: 4537
+Processed 4700/6000 sampled DOIs; abstracts present: 4632
+Processed 4800/6000 sampled DOIs; abstracts present: 4731
+Processed 4900/6000 sampled DOIs; abstracts present: 4830
+Processed 5000/6000 sampled DOIs; abstracts present: 4930
+Processed 5100/6000 sampled DOIs; abstracts present: 5029
+Processed 5200/6000 sampled DOIs; abstracts present: 5129
+Processed 5300/6000 sampled DOIs; abstracts present: 5228
+Processed 5400/6000 sampled DOIs; abstracts present: 5328
+Processed 5500/6000 sampled DOIs; abstracts present: 5427
+Processed 5600/6000 sampled DOIs; abstracts present: 5526
+Processed 5700/6000 sampled DOIs; abstracts present: 5626
+Processed 5800/6000 sampled DOIs; abstracts present: 5726
+Processed 5900/6000 sampled DOIs; abstracts present: 5825
+Processed 6000/6000 sampled DOIs; abstracts present: 5923
+Saved 5923 rows with abstracts to data/REF_Titles_and_Abstracts.csv; 77 sampled abstracts were unavailable.

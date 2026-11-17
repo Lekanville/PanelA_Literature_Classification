@@ -33,3 +33,6 @@ Thumbs.db
 # Jupyter Notebook
 notebooks/
 .ipynb_checkpoints/
+
+# vscode
+.vscode/
