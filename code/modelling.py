@@ -257,7 +257,7 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
             results.append({
                 "uoa": uoa,
                 "algorithm": alg,
-                "cv_mean_auc": mean_auc,
+                "cv_mean_auc_roc": mean_auc,
                 "cv_std_auc": std_auc,
                 "test_roc_auc": final_roc_auc,
                 "test_f1": final_f1,
@@ -319,7 +319,7 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
         # results.append({
         #     "uoa": uoa,
         #     "algorithm": "KNN_Baseline",
-        #     "cv_mean_auc": 0.0, # No CV for KNN
+        #     "cv_mean_auc_roc": 0.0, # No CV for KNN
         #     "cv_std_auc": 0.0,  # No CV for KNN
         #     "test_roc_auc": knn_auc,
         #     "test_f1": knn_f1,
@@ -336,7 +336,7 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
         [
             "algorithm",
             "uoa",
-            "cv_mean_auc",
+            "cv_mean_auc_roc",
             "cv_std_auc",
             "test_roc_auc",
             "test_accuracy",

@@ -21,7 +21,7 @@ ALGORITHM_LABELS = {
     "KerasMLP": "MLP",
 }
 UOAS = tuple(range(1, 7))
-RESULT_COLUMNS = {"uoa", "algorithm", "cv_mean_auc", "cv_std_auc"}
+RESULT_COLUMNS = {"uoa", "algorithm", "cv_mean_auc_roc", "cv_std_auc"}
 
 
 def load_cv_results(results_root: Path) -> dict[tuple[int, str, str], tuple[float, float]]:
@@ -38,9 +38,9 @@ def load_cv_results(results_root: Path) -> dict[tuple[int, str, str], tuple[floa
             raise ValueError(f"{path} is missing columns: {sorted(missing_columns)}")
 
         results["uoa"] = pd.to_numeric(results["uoa"], errors="coerce")
-        results["cv_mean_auc"] = pd.to_numeric(results["cv_mean_auc"], errors="coerce")
+        results["cv_mean_auc_roc"] = pd.to_numeric(results["cv_mean_auc_roc"], errors="coerce")
         results["cv_std_auc"] = pd.to_numeric(results["cv_std_auc"], errors="coerce")
-        if results[["uoa", "cv_mean_auc", "cv_std_auc"]].isna().any().any():
+        if results[["uoa", "cv_mean_auc_roc", "cv_std_auc"]].isna().any().any():
             raise ValueError(f"{path} contains missing or non-numeric CV results")
 
         for row in results.itertuples(index=False):
@@ -54,7 +54,7 @@ def load_cv_results(results_root: Path) -> dict[tuple[int, str, str], tuple[floa
             key = (uoa, plm_name, algorithm)
             if key in scores:
                 raise ValueError(f"Duplicate CV result for UoA {uoa}, {plm_name}, {algorithm}")
-            scores[key] = (float(row.cv_mean_auc), float(row.cv_std_auc))
+            scores[key] = (float(row.cv_mean_auc_roc), float(row.cv_std_auc))
 
     expected = {
         (uoa, plm_name, algorithm)
