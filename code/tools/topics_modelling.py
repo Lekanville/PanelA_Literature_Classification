@@ -11,13 +11,77 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 
+def normalize_topic_text(value):
+    if not isinstance(value, str):
+        return ""
+
+    text_value = value.replace('\xa0', ' ')
+    dash = r"[-\u2010-\u2015]"
+    text_value = re.sub(
+        rf"\b1\s*,\s*25\s*{dash}?\s*\(?\s*oh\s*\)?\s*2\s*d\s*([23])\b",
+        r"1,25 dihydroxyvitamin d\1",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b1\s*,\s*25\s*{dash}?\s*\(?\s*oh\s*\)?\s*2\s*d\b",
+        "1,25 dihydroxyvitamin d",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b1\s*,\s*25\s*{dash}?\s*dihydroxy\s*vitamin\s*{dash}?\s*d\s*([23])\b",
+        r"1,25 dihydroxyvitamin d\1",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b1\s*,\s*25\s*{dash}?\s*dihydroxy\s*vitamin\s*{dash}?\s*d\b",
+        "1,25 dihydroxyvitamin d",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b25\s*{dash}?\s*\(?\s*oh\s*\)?\s*{dash}?\s*d\s*([23])\b",
+        r"25 hydroxyvitamin d\1",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b25\s*{dash}?\s*\(?\s*oh\s*\)?\s*{dash}?\s*d\b",
+        "25 hydroxyvitamin d",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b25\s*{dash}?\s*hydroxy\s*vitamin\s*{dash}?\s*d\s*([23])\b",
+        r"25 hydroxyvitamin d\1",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b25\s*{dash}?\s*hydroxy\s*vitamin\s*{dash}?\s*d\b",
+        "25 hydroxyvitamin d",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_value = re.sub(
+        rf"\b25\s*{dash}?\s*hydroxy\s*cholecalciferol\b",
+        "25 hydroxyvitamin d3",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    return ' '.join(text_value.split())
+
+
 def extract_uoa_research_areas(df, text_col='topic_text', uoa_col='Unit_of_assessment_number', top_n=10):
     # Legacy path: call with text_col='Titl_and_Abs_Clean'.
+    df = df.copy()
     if text_col not in df.columns:
-        df = df.copy()
         df[text_col] = (
             df['Title'].fillna('') + ' ' + df['Abstract'].fillna('')
-        ).map(lambda text: ' '.join(text.replace('\xa0', ' ').split()))
+        )
+    df[text_col] = df[text_col].map(normalize_topic_text)
 
     # 1. Group all abstracts by UoA to create "Class Documents"
     uoa_docs = df.groupby(uoa_col)[text_col].apply(lambda x: ' '.join(x)).reset_index()
