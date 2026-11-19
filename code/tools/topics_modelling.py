@@ -11,7 +11,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 
-def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_of_assessment_number', top_n=10):
+def extract_uoa_research_areas(df, text_col='topic_text', uoa_col='Unit_of_assessment_number', top_n=10):
+    # Legacy path: call with text_col='Titl_and_Abs_Clean'.
+    if text_col not in df.columns:
+        df = df.copy()
+        df[text_col] = (
+            df['Title'].fillna('') + ' ' + df['Abstract'].fillna('')
+        ).map(lambda text: ' '.join(text.replace('\xa0', ' ').split()))
+
     # 1. Group all abstracts by UoA to create "Class Documents"
     uoa_docs = df.groupby(uoa_col)[text_col].apply(lambda x: ' '.join(x)).reset_index()
 
@@ -88,7 +95,7 @@ def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_
         
     return uoa_themes
 
-# def extract_uoa_research_areas(df, text_col='Titl_and_Abs_Clean', uoa_col='Unit_of_assessment_number', top_n=10):
+# def extract_uoa_research_areas(df, text_col='topic_text', uoa_col='Unit_of_assessment_number', top_n=10):
 #     # 1. Group all abstracts by UoA to create "Class Documents"
 #     # This treats each UoA as one single giant text block
 #     uoa_docs = df.groupby(uoa_col)[text_col].apply(lambda x: ' '.join(x)).reset_index()

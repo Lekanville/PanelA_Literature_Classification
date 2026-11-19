@@ -25,6 +25,7 @@ env/
 # Results and logs
 logs/
 *.log
+*.out
 
 # OS metadata
 .DS_Store

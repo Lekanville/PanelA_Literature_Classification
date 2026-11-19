@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --job-name=ref_preprocess
-#SBATCH --output=ref_preprocess_%j.out
+#SBATCH --job-name=preprocess_ref_data
+#SBATCH --output=preprocess_ref_data_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G

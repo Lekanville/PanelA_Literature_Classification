@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --job-name=ref_multilabel_eval
-#SBATCH --output=ref_multilabel_eval_%j.out
+#SBATCH --job-name=evaluate_multilabel
+#SBATCH --output=evaluate_multilabel_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=8G

@@ -1,5 +1,5 @@
 import os
-import re
+# Legacy path also required: import re
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
@@ -12,59 +12,52 @@ if os.getenv("HF_TOKEN"):
 else:
     print("Warning: HF_TOKEN not found in environment!")
 
-def clean_academic_text(text):
-    """Clean academic text, including legal boilerplate, noise, and US/UK spelling normalization."""
+# Legacy preprocessing path retained for reference. It applied hand-picked
+# spelling, boilerplate, and statistical substitutions before PLM encoding.
+# def clean_academic_text(text):
+#     if not isinstance(text, str):
+#         return ""
+#
+#     text = text.replace('\xa0', ' ')
+#     spelling_map = {
+#         r'\brandomized\b': 'randomised',
+#         r'\borganization\b': 'organisation',
+#         r'\bbehavior\b': 'behaviour',
+#         r'\bcenter\b': 'centre',
+#         r'\bmodeling\b': 'modelling'
+#     }
+#     for us_pattern, uk_word in spelling_map.items():
+#         text = re.sub(us_pattern, uk_word, text, flags=re.IGNORECASE)
+#
+#     boilerplate_patterns = [
+#         r'©', r'\bcopyright\b', r'\ball rights reserved\b',
+#         r'\bjohn wiley\b', r'\bspringer nature\b', r'\bwiley sons\b',
+#         r'\bamerican psychological association\b', r'\bamerican psychological\b',
+#         r'\bpsychological association\b', r'\babstract available\b',
+#         r'\belsevier\b', r'\bpublisher\b', r'\bmacmillan publishers\b',
+#         r'\b\d{4}\s+author\b', r'\bamerican society\b',
+#         r'\bfindings suggest\b', r'\bnational academy\b',
+#         r'\b\d{4}\s+[A-Z][a-z]+',
+#         r'\b\d{4}\s+the\s+cochrane\s+collaboration\b',
+#         r'\b\d{4}\s+author\w*'
+#     ]
+#     for pattern in boilerplate_patterns:
+#         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+#
+#     noise = [
+#         r'\b95%?\s?ci\b', r'\b95%?\s?confidence interval\b',
+#         r'\bet al\b', r'\bp\s?[<=]\s?0?\.05\b', r'\binf\b'
+#     ]
+#     for pattern in noise:
+#         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+#
+#     return re.sub(r'\s+', ' ', text).strip()
+
+def prepare_embedding_text(text):
+    """Prepare title and abstract text without hand-picked linguistic substitutions."""
     if not isinstance(text, str):
         return ""
-    
-    text = text.replace('\xa0', ' ')
-
-    # 1. Standardize US/UK English variations to protect topic cohesion
-    # This ensures 'randomized' and 'randomised' merge into a single semantic token
-    spelling_map = {
-        r'\brandomized\b': 'randomised',
-        r'\borganization\b': 'organisation',
-        r'\bbehavior\b': 'behaviour',
-        r'\bcenter\b': 'centre',
-        r'\bmodeling\b': 'modelling'
-    }
-    for us_pattern, uk_word in spelling_map.items():
-        text = re.sub(us_pattern, uk_word, text, flags=re.IGNORECASE)
-    
-    # 2. Clean specific boilerplate phrases (No text loss following them)
-    boilerplate_patterns = [
-        r'©', r'\bcopyright\b', r'\ball rights reserved\b', 
-        r'\bjohn wiley\b', r'\bspringer nature\b', r'\bwiley sons\b',
-        r'\bamerican psychological association\b', r'\bamerican psychological\b',
-        r'\bpsychological association\b', r'\babstract available\b',
-        r'\belsevier\b', r'\bpublisher\b', r'\bmacmillan publishers\b',
-        r'\b\d{4}\s+author\b', r'\bamerican society\b', r'\bfindings suggest\b',
-        r'\bnational academy\b', 
-        
-        r'\b\d{4}\s+[A-Z][a-z]+',                      # Catches "2019 Melatti", "2020 The"
-        r'\b\d{4}\s+the\s+cochrane\s+collaboration\b', # Catches Cochrane header explicitly
-        r'\b\d{4}\s+author\w*'                         # Keeps your standard fallback safety net
-    ]
-
-    for pattern in boilerplate_patterns:
-        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
-    
-    # 3. Remove specific statistical noise
-    noise = [
-        r'\b95%?\s?ci\b', r'\b95%?\s?confidence interval\b', 
-        r'\bet al\b', r'\bp\s?[<=]\s?0?\.05\b',
-        r'\binf\b'
-    ]
-    for pattern in noise:
-        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
-    
-    text = re.sub(r'\s+', ' ', text).strip()
-
-    # x = re.search("2019.*author.*", text)
-    # if x:
-    #     print(text)
-
-    return text
+    return " ".join(text.replace('\xa0', ' ').split())
 
 def compute_embeddings(df, model_name):
     """
@@ -77,9 +70,16 @@ def compute_embeddings(df, model_name):
         np.ndarray: Array of shape (n_texts, embedding_dim) containing the embeddings.
     """
 
-    # APPLY CLEANING BEFORE EMBEDDING
-    df["Titl_and_Abs_Clean"] = (df["Title"].fillna('') + " " + df["Abstract"].fillna('')).apply(clean_academic_text)
-    docs = df["Titl_and_Abs_Clean"].tolist()
+    # Legacy assignment retained for switching back to the old PLM input:
+    # df["Titl_and_Abs_Clean"] = (
+    #     df["Title"].fillna('') + " " + df["Abstract"].fillna('')
+    # ).apply(clean_academic_text)
+    # docs = df["Titl_and_Abs_Clean"].tolist()
+
+    df["embedding_text"] = (
+        df["Title"].fillna('') + " " + df["Abstract"].fillna('')
+    ).apply(prepare_embedding_text)
+    docs = df["embedding_text"].tolist()
 
     # Encode using the pool of 4 visible GPUs
     if model_name == "all-mpnet":

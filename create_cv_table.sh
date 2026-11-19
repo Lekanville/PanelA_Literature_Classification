@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --job-name=cv_auc_table
-#SBATCH --output=cv_auc_table_%j.out
+#SBATCH --job-name=create_cv_table
+#SBATCH --output=create_cv_table_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G

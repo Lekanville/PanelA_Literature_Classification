@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --job-name=knn_results_table
-#SBATCH --output=knn_results_table_%j.out
+#SBATCH --job-name=create_knn_table
+#SBATCH --output=create_knn_table_%j.log
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
