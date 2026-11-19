@@ -67,13 +67,15 @@ sbatch BioMedBert_all_embedings.sh
 sbatch pubmedbert-base-embeddings_all_embedings.sh
 ```
 
+Each job passes `--skip-topic-modeling true` or `false` to control topic extraction and the UoA network plot. It is currently `false` for all-mpnet and `true` for the other three jobs, so the shared analysis runs once. Set it to `false` in another job and `true` in the current one to move the analysis.
+
 Each run:
 1. Computes embeddings from the cleaned title and abstract.
 2. Makes a stratified 80/20 train/test split and saves the test set as `test_dataset.csv`.
 3. Tunes and evaluates a weighted k-NN baseline.
 4. For each UoA, trains one-vs-rest `LinearSVC`, `LightGBM` and `KerasMLP` classifiers on a class-balanced training set, with 5-fold nested cross-validation and evaluation on the held-out test set.
 
-Outputs per run: `modelling_results.xlsx`, `knn_tuning_results.xlsx`, `knn_test_results.csv`, cross-validation ROC plots and `uoa_network_analysis.png`. The BioMedBERT run also saves its LightGBM models to `model/champion_ovr_model_uoa_<n>.joblib`, which phase 4 uses.
+Outputs per run: `modelling_results.xlsx`, `knn_tuning_results.xlsx`, `knn_test_results.csv` and cross-validation ROC plots. The run with `--skip-topic-modeling false` also saves `uoa_network_analysis.png`. The BioMedBERT run also saves its LightGBM models to `model/champion_ovr_model_uoa_<n>.joblib`, which phase 4 uses.
 
 ## 3. Result tables
 

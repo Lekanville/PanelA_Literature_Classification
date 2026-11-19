@@ -37,6 +37,9 @@ export PYTHON_START_METHOD='forkserver'
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 export TF_CPP_MIN_LOG_LEVEL=1
 
+SKIP_TOPIC_MODELING=false
+
 srun python code/modelling.py --input_file data/REF_Titles_and_Abstracts.csv \
                                 --sbert_model PubMed_BERT \
-                                --output_directory results/all_embeddings_modelling/pubmedbert-base-embeddings_all_embeddings
+                                --output_directory results/all_embeddings_modelling/pubmedbert-base-embeddings_all_embeddings \
+                                --skip-topic-modeling "$SKIP_TOPIC_MODELING"

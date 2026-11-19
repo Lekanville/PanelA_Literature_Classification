@@ -62,13 +62,29 @@ set_reproducibility(42)
 
 
 
+def parse_bool(value):
+    normalized = value.lower()
+    if normalized in {"true", "1", "yes"}:
+        return True
+    if normalized in {"false", "0", "no"}:
+        return False
+    raise argparse.ArgumentTypeError("expected true or false")
+
+
 parser = argparse.ArgumentParser(description= "A script to filter data")
 parser.add_argument('-i', '--input_file', type=str, required=True, help= 'The input dataset')
 parser.add_argument('-s', '--sbert_model', type=str, required=True, help= 'The SBERT model to use for embeddings')
 parser.add_argument('-o', '--output_directory', type=str, required=True, help= 'The output directory to save results')
+parser.add_argument(
+    '--skip-topic-modeling',
+    type=parse_bool,
+    default=False,
+    metavar='true|false',
+    help='Skip UoA topic extraction and network plotting',
+)
 
 
-def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
+def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT, run_topic_modeling=True):
 
     Path(OUTPUT).mkdir(parents=True, exist_ok=True)
 
@@ -122,23 +138,19 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
 
 
 
-    # 2. Extract UoA research areas (themes) using c-TF-IDF for interpretability and insights
-    # a. We use the TRAINING portion of the data to ensure that our thematic analysis is based on the same data that the models
-    # will learn from. This avoids any "data leakage" of themes from the test set.
-    train_indices = X_train_all.index
-    train_df = embedded_df.loc[train_indices].copy()
-    logger.info(f"Training set size: {len(train_df)}")
-    logger.info(f"Thematic analysis based on {train_df['Unit_of_assessment_number'].nunique()} UoAs in training set.")
+    if run_topic_modeling:
+        train_indices = X_train_all.index
+        train_df = embedded_df.loc[train_indices].copy()
+        logger.info(f"Training set size: {len(train_df)}")
+        logger.info(f"Thematic analysis based on {train_df['Unit_of_assessment_number'].nunique()} UoAs in training set.")
 
-    # b. Extract themes and print them out for each UoA. This is purely for interpretability and to understand the research 
-    # focus of each UoA based on the training data.
-    themes = extract_uoa_research_areas(train_df)
-    for uoa, areas in themes.items():
-        print(f"UoA: {uoa} \nAreas: {', '.join(areas)}\n")
+        themes = extract_uoa_research_areas(train_df)
+        for uoa, areas in themes.items():
+            print(f"UoA: {uoa} \nAreas: {', '.join(areas)}\n")
 
-    # c. We can also visualize the themes using a network graph (similar to image_85d235.jpg). 
-    # This is not critical for modelling but can provide valuable insights.
-    plot_uoa_network(themes, OUTPUT)
+        plot_uoa_network(themes, OUTPUT)
+    else:
+        logger.info("Skipping topic extraction and network plotting for this PLM run.")
 
 
     # 3. TUNING SPLIT (Use only training data to find best k and w)
@@ -340,4 +352,9 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    uoa_modelling(args.input_file, args.sbert_model, args.output_directory)
+    uoa_modelling(
+        args.input_file,
+        args.sbert_model,
+        args.output_directory,
+        run_topic_modeling=not args.skip_topic_modeling,
+    )
