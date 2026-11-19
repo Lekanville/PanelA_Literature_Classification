@@ -267,15 +267,15 @@ def plot_uoa_network(themes_dict, output_dir):
     nx.draw_networkx_edges(G, pos, alpha=0.3, edge_color='#BDBDBD', width=0.8)
     
     # FIX: Explicitly passing the custom color lists to all node types
-    nx.draw_networkx_nodes(G, pos, nodelist=unique_phrases, node_size=50, 
+    nx.draw_networkx_nodes(G, pos, nodelist=unique_phrases, node_size=100, 
                            node_color=[node_colors[n] for n in unique_phrases], alpha=0.85)
-    nx.draw_networkx_nodes(G, pos, nodelist=shared_phrases, node_size=90, 
+    nx.draw_networkx_nodes(G, pos, nodelist=shared_phrases, node_size=160, 
                            node_color=[node_colors[n] for n in shared_phrases], alpha=0.95)
-    nx.draw_networkx_nodes(G, pos, nodelist=uoa_nodes, node_size=3200, 
-                           node_color=[node_colors[n] for n in uoa_nodes], alpha=0.95)
+    hub_nodes = nx.draw_networkx_nodes(G, pos, nodelist=uoa_nodes, node_size=4400, 
+                                       node_color=[node_colors[n] for n in uoa_nodes], alpha=0.95)
     
     # 3. Draw Hub Labels
-    nx.draw_networkx_labels(G, pos, labels={n: n for n in uoa_nodes}, font_size=18, font_weight='bold')
+    nx.draw_networkx_labels(G, pos, labels={n: n for n in uoa_nodes}, font_size=22, font_weight='bold')
     
     # 4. Draw Central Shared Labels with layout jitter to fix overlapping text
     # np.random.seed(42)  
@@ -298,7 +298,7 @@ def plot_uoa_network(themes_dict, output_dir):
     for node in shared_phrases:
         nx_val, ny_val = pos[node]
         t = plt.text(nx_val, ny_val, s=node,
-                     fontsize=8.5, fontweight='bold', family='sans-serif',
+                     fontsize=12, fontweight='bold', family='sans-serif',
                      horizontalalignment='center', verticalalignment='center',
                      bbox=dict(facecolor='white', edgecolor='none', boxstyle='round,pad=0.2', alpha=0.85))
         texts.append(t)
@@ -308,7 +308,7 @@ def plot_uoa_network(themes_dict, output_dir):
     # 5. Draw Peripheral Unique Labels
     for node in unique_phrases:
         nx_val, ny_val = pos[node]
-        t_unique = plt.text(nx_val, ny_val, s=node, fontsize=8, fontweight='semibold', color='#222222',
+        t_unique = plt.text(nx_val, ny_val, s=node, fontsize=11, fontweight='semibold', color='#222222',
                             horizontalalignment='center', verticalalignment='center')
         texts.append(t_unique)
         target_x.append(nx_val)
@@ -318,6 +318,7 @@ def plot_uoa_network(themes_dict, output_dir):
     adjust_text(texts, 
                 x=target_x,
                 y=target_y,
+                objects=hub_nodes,
                 expand_points=(1.8, 1.8), 
                 expand_text=(1.3, 1.5),
                 force_text=(0.15, 0.3),
