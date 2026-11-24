@@ -54,71 +54,60 @@ else:
 #     return re.sub(r'\s+', ' ', text).strip()
 
 def prepare_embedding_text(text):
-    """Prepare title and abstract text without hand-picked linguistic substitutions."""
     if not isinstance(text, str):
         return ""
     return " ".join(text.replace('\xa0', ' ').split())
 
-def compute_embeddings(df, model_name):
-    """
-    Compute SBERT embeddings for a list of texts.
-    
-    Args:
-        texts (list of str): List of input texts to embed.
-        model_name (str): The name of the SBERT model to use.
-    Returns:
-        np.ndarray: Array of shape (n_texts, embedding_dim) containing the embeddings.
-    """
 
-    # Legacy assignment retained for switching back to the old PLM input:
-    # df["Titl_and_Abs_Clean"] = (
-    #     df["Title"].fillna('') + " " + df["Abstract"].fillna('')
-    # ).apply(clean_academic_text)
-    # docs = df["Titl_and_Abs_Clean"].tolist()
+MODEL_REPOSITORIES = {
+    "all-mpnet": "all-mpnet-base-v2",
+    "Bio_clinical_BERT": "emilyalsentzer/Bio_ClinicalBERT",
+    "Biomed_BERT": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
+    "PubMed_BERT": "neuml/pubmedbert-base-embeddings",
+}
 
+
+def _encode_frame(df, model, pool):
+    df = df.copy()
     df["embedding_text"] = (
         df["Title"].fillna('') + " " + df["Abstract"].fillna('')
     ).apply(prepare_embedding_text)
     docs = df["embedding_text"].tolist()
+    print(f"Encoding {len(docs)} abstracts across 4 GPUs...")
+    corpus_embeddings = model.encode_multi_process(
+        docs, pool, show_progress_bar=True, batch_size=512
+    )
+    embedding_df = pd.DataFrame(
+        corpus_embeddings,
+        columns=[f"corpus_embeddings_{index}" for index in range(corpus_embeddings.shape[1])],
+        index=df.index,
+    )
+    return pd.concat([df, embedding_df], axis=1)
 
-    # Encode using the pool of 4 visible GPUs
-    if model_name == "all-mpnet":
-        sbert_model_name = 'all-mpnet-base-v2'
-    elif model_name == "Bio_clinical_BERT":
-        sbert_model_name = "emilyalsentzer/Bio_ClinicalBERT"
-    elif model_name == "Biomed_BERT":
-        sbert_model_name = "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext"
-    elif model_name == "PubMed_BERT":
-        sbert_model_name = "neuml/pubmedbert-base-embeddings"
 
-    model = SentenceTransformer(sbert_model_name, model_kwargs={"use_safetensors": True})
-    pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
-
+def _compute_embeddings_for_frames(frames, model_name):
     try:
-        print("Encoding abstracts across 4 GPUs...")
-        corpus_embeddings = model.encode_multi_process(docs, pool, show_progress_bar=True, batch_size=512)
+        repository = MODEL_REPOSITORIES[model_name]
+    except KeyError as error:
+        raise ValueError(f"Unsupported SBERT model: {model_name}") from error
+
+    model = SentenceTransformer(repository, model_kwargs={"use_safetensors": True})
+    pool = model.start_multi_process_pool(target_devices=['cuda:0', 'cuda:1', 'cuda:2', 'cuda:3'])
+    try:
+        return tuple(_encode_frame(frame, model, pool) for frame in frames)
     finally:
-        # CRITICAL: This executes even if encoding errors out, 
-        # ensuring the 4 background GPU daemons are instantly killed.
         print("Shutting down GPU Pool cleanly...")
         model.stop_multi_process_pool(pool)
 
-    # When encoding, SBERT will now use the GPU
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # model = SentenceTransformer('all-mpnet-base-v2', device=device)
-    # corpus_embeddings = model.encode(docs, show_progress_bar=True, batch_size=32)
 
-    embedding_df = pd.DataFrame(
-        corpus_embeddings, 
-        columns=[f"corpus_embeddings_{i}" for i in range(corpus_embeddings.shape[1])],
-        index=df.index  # Crucial: keep the indices aligned
-    )
+def compute_embeddings(df, model_name):
+    """Compute embeddings for one dataframe using a pretrained sentence model."""
+    return _compute_embeddings_for_frames((df,), model_name)[0]
 
-    # 2. Concatenate the original DF with the new embedding DF
-    # axis=1 means "add columns next to each other"
-    df = pd.concat([df, embedding_df], axis=1)
 
-    return df
+def compute_embeddings_for_splits(train_df, test_df, model_name):
+    """Encode train and test data separately using one loaded model and GPU pool."""
+    return _compute_embeddings_for_frames((train_df, test_df), model_name)
 
 
 

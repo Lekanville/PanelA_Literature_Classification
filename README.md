@@ -67,15 +67,16 @@ sbatch BioMedBert_all_embedings.sh
 sbatch pubmedbert-base-embeddings_all_embedings.sh
 ```
 
-Each job passes `--skip-topic-modeling true` or `false` to control topic extraction and the UoA network plot. It is currently `false` for all-mpnet and `true` for the other three jobs, so the shared analysis runs once. Set it to `false` in another job and `true` in the current one to move the analysis.
+Each job passes `--skip-topic-modeling true` or `false` to control topic extraction and the UoA network plot. It is currently `false` for BioMedBert_all_embeddings and `true` for the other three jobs, so the shared analysis runs once. Set it to `false` in another job and `true` in the current one to move the analysis.
 
 Each run:
-1. Computes embeddings from the cleaned title and abstract.
-2. Makes a stratified 80/20 train/test split and saves the test set as `test_dataset.csv`.
-3. Tunes and evaluates a weighted k-NN baseline.
-4. For each UoA, trains one-vs-rest `LinearSVC`, `LightGBM` and `KerasMLP` classifiers on a class-balanced training set, with 5-fold nested cross-validation and evaluation on the held-out test set.
+1. Makes a stratified 80/20 train/test split by UoA from the deduplicated article records.
+2. If enabled, runs UoA topic analysis on training titles and abstracts only.
+3. Computes embeddings separately for the training and held-out test partitions, then saves the test partition as `test_dataset.csv`.
+4. Tunes and evaluates a weighted k-NN baseline.
+5. For each UoA, trains one-vs-rest `LinearSVC`, `LightGBM` and `KerasMLP` classifiers on a class-balanced training set, with 5-fold nested cross-validation and evaluation on the held-out test set.
 
-Outputs per run: `modelling_results.xlsx`, `knn_tuning_results.xlsx`, `knn_test_results.csv` and cross-validation ROC plots. The run with `--skip-topic-modeling false` also saves `uoa_network_analysis.png`. The BioMedBERT run also saves its LightGBM models to `model/champion_ovr_model_uoa_<n>.joblib`, which phase 4 uses.
+Outputs per run: `modelling_results.xlsx`, `knn_tuning_results.xlsx`, `knn_test_results.csv` and cross-validation ROC plots. The run with `--skip-topic-modeling false` also saves `uoa_network_analysis.png` and `uoa_topic_phrase_counts.csv`. Topic phrases are normalized and consolidated before counting; only phrases present in at least 1% of that UoA's training abstracts are eligible, then the ten highest class-level TF-IDF phrases are plotted. The count file records article counts, prevalence and TF-IDF scores. The BioMedBERT run also saves its LightGBM models to `model/champion_ovr_model_uoa_<n>.joblib`, which phase 4 uses.
 
 ## 3. Result tables
 

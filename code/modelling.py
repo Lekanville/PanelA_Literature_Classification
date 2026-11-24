@@ -19,7 +19,7 @@ from tools.topics_modelling import extract_uoa_research_areas, plot_uoa_network
 from tools.hyperparameter_tuning import hyperparam_search_main
 from tools.cross_val import cross_val_main
 from tools.final_eval import final_evaluation, knn_instance_based_final_eval
-from tools.embeddings import compute_embeddings
+from tools.embeddings import compute_embeddings_for_splits
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -97,60 +97,61 @@ def uoa_modelling(INPUT, SBERT_MODEL, OUTPUT, run_topic_modeling=True):
     cols_to_clean = embedding_cols + combined_text
     clean_df = clean_df.drop(columns = cols_to_clean, errors='ignore')
 
-    # embeddings
-    embedded_df = compute_embeddings(clean_df, SBERT_MODEL)
-
-    # Data validation checks
     logger.info(f"Original data shape: {df.shape}")
-    logger.info(f"Cleaned data shape: {embedded_df.shape}")
-    logger.info(f"Unique UoAs: {embedded_df['Unit_of_assessment_number'].nunique()}")
-    
-    # Check for missing values in embeddings
-    missing_embeddings = embedded_df[embedding_cols].isnull().sum().sum()
-    logger.info(f"Missing values in embeddings: {missing_embeddings}")
-    
-    # Validate embeddings (check norms)
-    X_all = embedded_df[embedding_cols]
-    embedding_norms = np.linalg.norm(X_all.values, axis=1)
-    logger.info(f"Embedding norms - Mean: {embedding_norms.mean():.3f}, Std: {embedding_norms.std():.3f}")
-    y_all = embedded_df["Unit_of_assessment_number"]
-    
-    # Check class distribution
-    uoa_counts = embedded_df['Unit_of_assessment_number'].value_counts().sort_index()
+    logger.info(f"Deduplicated data shape: {clean_df.shape}")
+    y_all = clean_df["Unit_of_assessment_number"]
+    uoa_counts = clean_df['Unit_of_assessment_number'].value_counts().sort_index()
     logger.info(f"UoA distribution:\n{uoa_counts}")
-    
-    uoas = embedded_df["Unit_of_assessment_number"].unique().tolist()
-    
-    
-    # 1. THE MASTER SPLIT (Keep X_test_all in a vault) - X_train_all and y_train_all will be used for both tuning and 
-    # final training, but only the training portion is used (and also resampled at OvR) tuning. The test portion 
-    # remains untouched until final evaluation.
-    X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(
-        X_all, y_all, test_size=0.2, random_state=42, stratify=y_all
+
+    train_df, test_df = train_test_split(
+        clean_df,
+        test_size=0.2,
+        random_state=42,
+        stratify=y_all,
     )
-
-    # 1b. Capture the original dataframe indices assigned to the test set
-    test_indices = X_test_all.index
-    test_tracking_df = embedded_df.loc[test_indices]
-    test_dataset_path = Path(OUTPUT) / "test_dataset.csv"
-    test_tracking_df.to_csv(test_dataset_path, index=True)
-    logger.info(f"Held-out test set saved to {test_dataset_path} with {len(test_tracking_df)} rows")
-
-
+    y_train_all = train_df["Unit_of_assessment_number"]
+    y_test_all = test_df["Unit_of_assessment_number"]
+    uoas = clean_df["Unit_of_assessment_number"].unique().tolist()
+    logger.info(f"Stratified split sizes: train={len(train_df)}, test={len(test_df)}")
 
     if run_topic_modeling:
-        train_indices = X_train_all.index
-        train_df = embedded_df.loc[train_indices].copy()
         logger.info(f"Training set size: {len(train_df)}")
         logger.info(f"Thematic analysis based on {train_df['Unit_of_assessment_number'].nunique()} UoAs in training set.")
 
-        themes = extract_uoa_research_areas(train_df)
+        themes, topic_phrase_counts = extract_uoa_research_areas(
+            train_df,
+            min_prevalence=0.01,
+        )
+        pd.DataFrame(topic_phrase_counts).to_csv(
+            Path(OUTPUT) / "uoa_topic_phrase_counts.csv",
+            index=False,
+        )
         for uoa, areas in themes.items():
             print(f"UoA: {uoa} \nAreas: {', '.join(areas)}\n")
 
         plot_uoa_network(themes, OUTPUT)
     else:
         logger.info("Skipping topic extraction and network plotting for this PLM run.")
+
+    embedded_train_df, embedded_test_df = compute_embeddings_for_splits(
+        train_df,
+        test_df,
+        SBERT_MODEL,
+    )
+    embedded_df = pd.concat([embedded_train_df, embedded_test_df]).sort_index()
+
+    logger.info(f"Embedded data shape: {embedded_df.shape}")
+    missing_embeddings = embedded_df[embedding_cols].isnull().sum().sum()
+    logger.info(f"Missing values in embeddings: {missing_embeddings}")
+    X_all = embedded_df[embedding_cols]
+    embedding_norms = np.linalg.norm(X_all.values, axis=1)
+    logger.info(f"Embedding norms - Mean: {embedding_norms.mean():.3f}, Std: {embedding_norms.std():.3f}")
+
+    X_train_all = embedded_train_df[embedding_cols]
+    X_test_all = embedded_test_df[embedding_cols]
+    test_dataset_path = Path(OUTPUT) / "test_dataset.csv"
+    embedded_test_df.to_csv(test_dataset_path, index=True)
+    logger.info(f"Held-out test set saved to {test_dataset_path} with {len(embedded_test_df)} rows")
 
 
     # 3. TUNING SPLIT (Use only training data to find best k and w)

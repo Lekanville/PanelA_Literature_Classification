@@ -37,7 +37,7 @@ export PYTHON_START_METHOD='forkserver'
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 export TF_CPP_MIN_LOG_LEVEL=1
 
-SKIP_TOPIC_MODELING=false
+SKIP_TOPIC_MODELING=true
 
 srun python code/modelling.py --input_file data/REF_Titles_and_Abstracts.csv  \
                                 --sbert_model Bio_clinical_BERT \
